@@ -1,4 +1,4 @@
-name := "."
+name := "thrift-generator"
 
 version := "1.0"
 
