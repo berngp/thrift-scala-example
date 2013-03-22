@@ -16,6 +16,8 @@ object MyBuild extends Build {
     thriftJavaOptions := Seq( "hashcode", "java5" )
   )
 
+  val hadoopCH4Version = "2.0.0-cdh4.2.0"
+
   /** */
   val sharedSettings = Defaults.defaultSettings ++ Project.defaultSettings ++ assemblySettings ++ releaseSettings ++ Seq(
 
@@ -26,12 +28,16 @@ object MyBuild extends Build {
     resolvers ++= Seq(
       "snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
       "releases" at "http://oss.sonatype.org/content/repositories/releases",
+      "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos",
       "Concurrent Maven Repo" at "http://conjars.org/repo"
     ),
+
 
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-lang3" % "3.1",
       "net.liftweb" %% "lift-util" % "2.5-RC1" % "compile",
+      "org.apache.hadoop" % "hadoop-client" % hadoopCH4Version,
+      "org.apache.hadoop" % "hadoop-yarn-client" % hadoopCH4Version,
       "org.scalaz" %% "scalaz-core" % "6.0.4",
       "org.apache.thrift" % "libthrift" % "0.9.0" % "compile",
       "org.scalacheck" %% "scalacheck" % "1.10.0" % "test",
@@ -85,7 +91,7 @@ object MyBuild extends Build {
   /** */
   lazy val producerPrj = Project(
     id = "producer",
-    base = file("produer"),
+    base = file("producer"),
     settings = sharedSettings
   ).dependsOn(thriftSchemaPrj)
 
