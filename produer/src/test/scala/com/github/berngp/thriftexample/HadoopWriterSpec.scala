@@ -16,4 +16,13 @@
 
 package com.github.berngp.thriftexample
 
+import org.scalatest._
+import org.scalatest.matchers.ShouldMatchers._
 
+/** */
+class HadoopWriterSpec extends FlatSpec {
+
+  behavior of "A Hadoop Writer "
+
+
+}
