@@ -49,7 +49,7 @@ class HadoopWriterSpec extends FlatSpec with SequentialNestedSuiteExecution {
   }
 
   it should "get the _Sequence Writer_ out of the builder" in {
-    buffer.writerBox = buffer.builderBox.get withHadoopConf fixture.conf withFile fixture.filePath build() asWriter()
+    buffer.writerBox = buffer.builderBox.get withHadoopConf fixture.conf withFile fixture.filePath build() asSequenceFileWriter()
     buffer.writerBox should be('defined)
   }
 

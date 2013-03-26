@@ -36,7 +36,8 @@ import scala.collection.JavaConversions._
 object HadoopWriter {
 
   case class HadoopWriterRecipe private[HadoopWriter](hadoopConf: HadoopConf, options: Seq[Writer.Option]) {
-    def asWriter() = try {
+
+    def asSequenceFileWriter() = try {
       Full(SequenceFile.createWriter(hadoopConf, options: _*))
     } catch {
       case iae: IllegalArgumentException =>
