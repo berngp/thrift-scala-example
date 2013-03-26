@@ -16,15 +16,15 @@
 
 package com.github.berngp.thriftexample
 
+import net.liftweb.common._
+import net.liftweb.util.ControlHelpers
 import scala.collection.JavaConversions._
-
 import thrift.example.{
 BinPacket => ThriftBinPacket,
 NetRecord => ThriftNetRecord,
 PacketHeader => ThriftHeader
 }
-import net.liftweb.common._
-import net.liftweb.util.{ControlHelpers}
+
 
 protected[thriftexample] object ThriftProducer extends ControlHelpers with Loggable {
 
@@ -56,28 +56,28 @@ protected[thriftexample] object ThriftProducer extends ControlHelpers with Logga
   }
 
   def packetHeaderToThrift(header: NetPacketHeader): Box[ThriftHeader] =
-    tryo( new ThriftHeader( header.version, 0, header.sysUpTime, header.unixSecs, header.sequenceNumber, header.sourceId) )
+    tryo(new ThriftHeader(header.version, 0, header.sysUpTime, header.unixSecs, header.sequenceNumber, header.sourceId))
 
   def netRecordsToThrift(netRecords: List[NetRecord] = List.empty): Box[List[ThriftNetRecord]] =
-    tryo( netRecords.map(
+    tryo(netRecords.map(
       r => new ThriftNetRecord(r.flowSetId, r.templateId, r.ipV4SrcAddr, r.ipV4DstAddr, r.ipv4NextHop, r.inPkts, r.inBytes)))
 
   def netRecordsToThrift(r: NetRecord): Box[ThriftNetRecord] =
-    if(r == null)
+    if (r == null)
       Empty
     else
-      tryo( new ThriftNetRecord(r.flowSetId, r.templateId, r.ipV4SrcAddr, r.ipV4DstAddr, r.ipv4NextHop, r.inPkts, r.inBytes))
+      tryo(new ThriftNetRecord(r.flowSetId, r.templateId, r.ipV4SrcAddr, r.ipV4DstAddr, r.ipv4NextHop, r.inPkts, r.inBytes))
 
-  implicit class NetPacketHeaderToThrift(val header:NetPacketHeader) {
-    def asThriftBox():Box[ThriftHeader] = packetHeaderToThrift(header)
+  implicit class NetPacketHeaderToThrift(val header: NetPacketHeader) {
+    def asThriftBox(): Box[ThriftHeader] = packetHeaderToThrift(header)
   }
 
-  implicit class NetRecordToThrift(val record:NetRecord) {
-    def asThriftBox():Box[ThriftNetRecord] = netRecordsToThrift(record)
+  implicit class NetRecordToThrift(val record: NetRecord) {
+    def asThriftBox(): Box[ThriftNetRecord] = netRecordsToThrift(record)
   }
 
-  implicit class NetBinPacketToThrift(val binPacket:NetBinPacket) {
-    def asThriftBox():Box[ThriftBinPacket] = netBinPacketToThrift(binPacket)
+  implicit class NetBinPacketToThrift(val binPacket: NetBinPacket) {
+    def asThriftBox(): Box[ThriftBinPacket] = netBinPacketToThrift(binPacket)
   }
 
 }

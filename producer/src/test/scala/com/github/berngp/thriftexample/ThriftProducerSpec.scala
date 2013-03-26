@@ -16,9 +16,9 @@
 
 package com.github.berngp.thriftexample
 
+import net.liftweb.common.{Failure, Full, Empty}
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers._
-import net.liftweb.common.{Failure, Full, Empty}
 
 
 /** */
@@ -29,18 +29,20 @@ class ThriftProducerSpec extends FlatSpec {
 
   val kNetRecord = NetRecord(1, 2, 3, 4, 5, 6, 7)
 
+  import ThriftProducer.NetBinPacketToThrift
+  import ThriftProducer.NetPacketHeaderToThrift
   import ThriftProducer.NetRecordToThrift
 
   it should "transform a _NetRecord_ to its thrift equivalent" in {
     kNetRecord.asThriftBox() match {
       case Full(thriftRecord) =>
-        thriftRecord.getFlowSetId() should equal (kNetRecord.flowSetId)
-        thriftRecord.getTemplateId() should equal (kNetRecord.templateId)
-        thriftRecord.getIpV4SrcAddr() should equal (kNetRecord.ipV4SrcAddr)
-        thriftRecord.getIpV4DstAddr() should equal (kNetRecord.ipV4DstAddr)
-        thriftRecord.getIpV4NextHop() should equal (kNetRecord.ipv4NextHop)
-        thriftRecord.getInBytes() should equal (kNetRecord.inBytes)
-        thriftRecord.getInPkts() should equal (kNetRecord.inPkts)
+        thriftRecord.getFlowSetId() should equal(kNetRecord.flowSetId)
+        thriftRecord.getTemplateId() should equal(kNetRecord.templateId)
+        thriftRecord.getIpV4SrcAddr() should equal(kNetRecord.ipV4SrcAddr)
+        thriftRecord.getIpV4DstAddr() should equal(kNetRecord.ipV4DstAddr)
+        thriftRecord.getIpV4NextHop() should equal(kNetRecord.ipv4NextHop)
+        thriftRecord.getInBytes() should equal(kNetRecord.inBytes)
+        thriftRecord.getInPkts() should equal(kNetRecord.inPkts)
       case Empty =>
         fail("A Thrift Net Record equivalent was expected but none obtained.")
       case Failure(m, t, c) =>
@@ -49,22 +51,21 @@ class ThriftProducerSpec extends FlatSpec {
 
   }
 
-  val kNetPacketHeader = NetPacketHeader(1,2,3,4,5)
+  val kNetPacketHeader = NetPacketHeader(1, 2, 3, 4, 5)
 
-  import ThriftProducer.NetPacketHeaderToThrift
 
   it should "transform a _Net Packet Header_ to its thrift equivalent" in {
     kNetPacketHeader.asThriftBox() match {
       case Full(thriftHeader) =>
-        thriftHeader.getVersion() should equal (kNetPacketHeader.version)
-        thriftHeader.getSequenceNumber() should equal (kNetPacketHeader.sequenceNumber)
-        thriftHeader.getSourceId() should equal (kNetPacketHeader.sourceId)
-        thriftHeader.getSysUpTime() should equal (kNetPacketHeader.sysUpTime)
-        thriftHeader.getUnixSecs() should equal (kNetPacketHeader.unixSecs)
-        thriftHeader.getCount() should equal (0)
+        thriftHeader.getVersion() should equal(kNetPacketHeader.version)
+        thriftHeader.getSequenceNumber() should equal(kNetPacketHeader.sequenceNumber)
+        thriftHeader.getSourceId() should equal(kNetPacketHeader.sourceId)
+        thriftHeader.getSysUpTime() should equal(kNetPacketHeader.sysUpTime)
+        thriftHeader.getUnixSecs() should equal(kNetPacketHeader.unixSecs)
+        thriftHeader.getCount() should equal(0)
       case Empty =>
         fail("A Thrift Net Packet Header equivalent was expected but none obtained.")
-      case Failure(m,t,c) =>
+      case Failure(m, t, c) =>
         fail("Shouldn't Fail: " + m, t.openOr(new Exception(m)))
     }
   }
@@ -72,18 +73,17 @@ class ThriftProducerSpec extends FlatSpec {
   val kRecordList = List(kNetRecord)
   val kNetBinPacket = NetBinPacket(kNetPacketHeader, kRecordList)
 
-  import ThriftProducer.NetBinPacketToThrift
 
   it should "transform a _Net Bin Packet_ to its thrift equivalent" in {
     kNetBinPacket.asThriftBox() match {
       case Full(binPacket) =>
-        binPacket.getHeader().getCount() should equal (kRecordList.size)
-        binPacket.getRecords().size() should equal (kRecordList.size)
+        binPacket.getHeader().getCount() should equal(kRecordList.size)
+        binPacket.getRecords().size() should equal(kRecordList.size)
 
       case Empty =>
         fail("A Thrift Net Packet Header equivalent was expected but none obtained.")
 
-      case Failure(m,t,c) =>
+      case Failure(m, t, c) =>
         fail("Shouldn't Fail: " + m, t.openOr(new Exception(m)))
     }
   }
