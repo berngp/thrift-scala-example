@@ -39,11 +39,11 @@
 /** Namespaces **/
 namespace java   com.github.berngp.thriftexample.thrift.example
 
-/** Current Version of _Example Packet Header_.*/
+/** Current Version of _ Packet Header_.*/
 const i16 CURRENT_EXAMPLE_PCKT_VERSION = 9 
 
-/** Describes the _Example Packet Header_, it should be acompanied by a list of _Example Net Records_  */
-struct ExamplePacketHeader{
+/** Describes the _ Packet Header_, it should be acompanied by a list of _ Net Records_  */
+struct PacketHeader{
     /** Given version of this Header Records, should be constant.*/
     1:required i16 version = CURRENT_EXAMPLE_PCKT_VERSION,
     /** Total number of Records inside the bin.*/
@@ -61,7 +61,7 @@ struct ExamplePacketHeader{
     6:required i64 sourceId
 }
 
-struct ExampleNetRecord {
+struct NetRecord {
     1:required i16 flowSetId,  //= 0 |      Length = 28 bytes        |
     2:required i16 templateId, //= 256 |       Field Count = 5         |
     3:required i32 ipV4SrcAddr,//= 8 |       Field Length = 4        |
@@ -74,21 +74,21 @@ struct ExampleNetRecord {
 /** 
  * Inspired by reference http://www.ietf.org/rfc/rfc3954.txt  
  * 
- * Bin that stores the _Example Packet Header_ as well as a 
- * list of _Example Net Records_.
+ * Bin that stores the _ Packet Header_ as well as a 
+ * list of _ Net Records_.
  *
  *   Thrift Object:
  *
  *   +--------+-----------------------------------. . .
  *   |        | +-----------------------+
- *   | Example| | List ofo              |
- *   | Bin    | | Example Net Records   |   . . .
- *   | Packet | |                       |
- *   | Header | +-----------------------+
+ *   | Bin    | | List fo               |
+ *   | Packet | |  Net Records          |   . . .
+ *   | Header | |                       |
+ *   |        | +-----------------------+
  *   +--------+-----------------------------------. . .
  *
  */
-struct ExampleBinPacket {
-    1:ExamplePacketHeader  header,
-    3:list<ExampleNetRecord> records
+struct BinPacket {
+    1:PacketHeader  header,
+    3:list<NetRecord> records
 }

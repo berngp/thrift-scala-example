@@ -18,7 +18,7 @@ package com.github.berngp.thriftexample
 
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers._
-import net.liftweb.common.{Full, Empty, Failure}
+import net.liftweb.common.{Failure, Full, Empty}
 
 
 /** */

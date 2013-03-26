@@ -19,9 +19,9 @@ package com.github.berngp.thriftexample
 import scala.collection.JavaConversions._
 
 import thrift.example.{
-ExampleBinPacket => ThriftBinPacket,
-ExampleNetRecord => ThriftNetRecord,
-ExamplePacketHeader => ThriftHeader
+BinPacket => ThriftBinPacket,
+NetRecord => ThriftNetRecord,
+PacketHeader => ThriftHeader
 }
 import net.liftweb.common._
 import net.liftweb.util.{ControlHelpers}
