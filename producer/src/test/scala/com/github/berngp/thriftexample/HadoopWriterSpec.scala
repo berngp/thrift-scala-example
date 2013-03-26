@@ -17,12 +17,12 @@
 package com.github.berngp.thriftexample
 
 import net.liftweb.common.{Box, Empty}
-
-import org.scalatest.{SequentialNestedSuiteExecution, FlatSpec}
-import org.scalatest.matchers.ShouldMatchers._
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem, Path}
-import org.apache.hadoop.io.{SequenceFile}
+import org.apache.hadoop.io.SequenceFile
+import org.scalatest.matchers.ShouldMatchers._
+import org.scalatest.{SequentialNestedSuiteExecution, FlatSpec}
+
 
 /** */
 class HadoopWriterSpec extends FlatSpec with SequentialNestedSuiteExecution {
@@ -30,7 +30,7 @@ class HadoopWriterSpec extends FlatSpec with SequentialNestedSuiteExecution {
   import HadoopWriter._
 
   object buffer {
-    var builderBox: Box[HadoopWriterBuilder[TRUE, TRUE]] = Empty
+    var builderBox: Option[HadoopWriterBuilder[_ <: BUILDER_REQ, _ <:BUILDER_REQ]] = None
     var writerBox: Box[SequenceFile.Writer] = Empty
   }
 
@@ -44,12 +44,12 @@ class HadoopWriterSpec extends FlatSpec with SequentialNestedSuiteExecution {
 
 
   it should "instantiate a _Sequence Stream Writer_ builder" in {
-    buffer.builderBox = builder(fixture.conf, fixture.filePath)
+    buffer.builderBox = Some( builder() )
     buffer.builderBox should be('defined)
   }
 
   it should "get the _Sequence Writer_ out of the builder" in {
-    buffer.writerBox = buffer.builderBox.get build() asWriter()
+    buffer.writerBox = buffer.builderBox.get withHadoopConf fixture.conf withFile fixture.filePath build() asWriter()
     buffer.writerBox should be('defined)
   }
 
