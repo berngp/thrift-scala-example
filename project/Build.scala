@@ -16,14 +16,19 @@ object MyBuild extends Build {
     thriftJavaOptions := Seq( "hashcode", "java5" )
   )
 
-  val hadoopCH4Version = "2.0.0-cdh4.2.0"
+  object Versions{
+    val scala = "2.10.0"
+    val lift = "2.5-RC1"
+    val hadoop = "2.0.0-cdh4.2.0"
+    val scalaIO = "0.4.2"
+  }
 
   /** */
   val sharedSettings = Defaults.defaultSettings ++ Project.defaultSettings ++ assemblySettings ++ releaseSettings ++ Seq(
 
     organization := "com.github.berngp",
 
-    scalaVersion := "2.10.0",
+    scalaVersion := Versions.scala,
 
     resolvers ++= Seq(
       "snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
@@ -33,11 +38,14 @@ object MyBuild extends Build {
     ),
 
 
+    //TODO issolate a per Project lib Seq sharing a common Seq.
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-lang3" % "3.1",
-      "net.liftweb" %% "lift-util" % "2.5-RC1" % "compile",
-      "org.apache.hadoop" % "hadoop-client" % hadoopCH4Version,
-      "org.apache.hadoop" % "hadoop-yarn-client" % hadoopCH4Version,
+      "com.github.scala-incubator.io" %% "scala-io-core" % Versions.scalaIO,
+      "com.github.scala-incubator.io" %% "scala-io-file" % Versions.scalaIO,
+      "net.liftweb" %% "lift-util" % Versions.lift % "compile",
+      "org.apache.hadoop" % "hadoop-client" % Versions.hadoop,
+      "org.apache.hadoop" % "hadoop-yarn-client" % Versions.hadoop,
       "org.scalaz" %% "scalaz-core" % "6.0.4",
       "org.apache.thrift" % "libthrift" % "0.9.0" % "compile",
       "org.scalacheck" %% "scalacheck" % "1.10.0" % "test",
