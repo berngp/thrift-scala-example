@@ -16,13 +16,50 @@
 
 package com.github.berngp.thriftexample
 
-import org.scalatest._
+import net.liftweb.common.{Box, Empty}
+
+import org.scalatest.{SequentialNestedSuiteExecution, FlatSpec}
 import org.scalatest.matchers.ShouldMatchers._
+import org.apache.hadoop.conf.{Configuration => HadoopConf}
+import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem, Path}
+import org.apache.hadoop.io.{SequenceFile}
 
 /** */
-class HadoopWriterSpec extends FlatSpec {
+class HadoopWriterSpec extends FlatSpec with SequentialNestedSuiteExecution {
+
+  import HadoopWriter._
+
+  object buffer {
+    var builderBox: Box[HadoopWriterBuilder[TRUE, TRUE]] = Empty
+    var writerBox: Box[SequenceFile.Writer] = Empty
+  }
 
   behavior of "A Hadoop Writer "
 
+  object fixture {
+    val conf = new HadoopConf()
+    val fs = HadoopFileSystem.get(conf)
+    val filePath = new Path("producer/target/hadoopWriterTest.txt")
+  }
+
+
+  it should "instantiate a _Sequence Stream Writer_ builder" in {
+    buffer.builderBox = builder(fixture.conf, fixture.filePath)
+    buffer.builderBox should be('defined)
+  }
+
+  it should "get the _Sequence Writer_ out of the builder" in {
+    buffer.writerBox = buffer.builderBox.get build() asWriter()
+    buffer.writerBox should be('defined)
+  }
+
+  it should "append values to the _Sequence Writer_ " in {
+    val writer = buffer.writerBox.get
+    writer.append("key".toText(), "value".toText())
+    writer.close()
+
+    val f = fixture
+    f.fs.exists(f.filePath) should be(true)
+  }
 
 }
