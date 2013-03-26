@@ -21,7 +21,7 @@ import collection.immutable.TreeMap
 import collection.mutable
 import collection.mutable.ArrayBuffer
 import java.{util => jutil}
-import net.liftweb.common.{Box, Failure, Full}
+import net.liftweb.common.{Failure, Full}
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.SequenceFile

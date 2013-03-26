@@ -34,7 +34,7 @@ class HadoopWriterSpec extends FlatSpec with SequentialNestedSuiteExecution {
     var writerBox: Box[SequenceFile.Writer] = Empty
   }
 
-  behavior of "A Hadoop Writer "
+  behavior of "A Hadoop Writer Builder"
 
   object fixture {
     val conf = new HadoopConf()
@@ -42,13 +42,12 @@ class HadoopWriterSpec extends FlatSpec with SequentialNestedSuiteExecution {
     val filePath = new Path("producer/target/hadoopWriterTest.txt")
   }
 
-
-  it should "instantiate a _Sequence Stream Writer_ builder" in {
+  it should "instantiate a builder" in {
     buffer.builderBox = Some( builder() )
     buffer.builderBox should be('defined)
   }
 
-  it should "get the _Sequence Writer_ out of the builder" in {
+  it should "get the _Sequence Writer_ " in {
     buffer.writerBox = buffer.builderBox.get withHadoopConf fixture.conf withFile fixture.filePath build() asSequenceFileWriter()
     buffer.writerBox should be('defined)
   }
