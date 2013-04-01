@@ -24,6 +24,7 @@ BinPacket => ThriftBinPacket,
 NetRecord => ThriftNetRecord,
 PacketHeader => ThriftHeader
 }
+import org.apache.hadoop.io.Writable
 
 
 protected[thriftexample] object ThriftProducer extends ControlHelpers with Loggable {

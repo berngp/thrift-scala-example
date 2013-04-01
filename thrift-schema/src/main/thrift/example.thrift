@@ -64,8 +64,8 @@ struct PacketHeader{
 struct NetRecord {
     1:required i16 flowSetId,  //= 0 |      Length = 28 bytes        |
     2:required i16 templateId, //= 256 |       Field Count = 5         |
-    3:required i32 ipV4SrcAddr,//= 8 |       Field Length = 4        |
-    4:required i32 ipV4DstAddr,//= 12|       Field Length = 4        |
+    3:required i64 ipV4SrcAddr,//= 8 |       Field Length = 4        |
+    4:required i64 ipV4DstAddr,//= 12|       Field Length = 4        |
     5:required i32 ipV4NextHop,//= 15|       Field Length = 4        |
     6:required i16 inPkts,     //= 2 |       Field Length = 4        |
     7:required i64 inBytes = 0

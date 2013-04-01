@@ -16,6 +16,10 @@
 
 package com.github.berngp
 
+import org.apache.hadoop.io.{Writable, SequenceFile}
+import java.io.IOException
+import collection.GenSeq
+
 
 package object thriftexample {
 
@@ -28,8 +32,21 @@ package object thriftexample {
   case class NetPacketHeader(version: Short, sysUpTime: Long, unixSecs: Int, sequenceNumber: Long, sourceId: Int) extends  NetStructure
 
   /** */
-  case class NetRecord(flowSetId: Short, templateId: Short, ipV4SrcAddr: Int, ipV4DstAddr: Int, ipv4NextHop: Int, inPkts: Short, inBytes: Long) extends  NetStructure
+  case class NetRecord(flowSetId: Short, templateId: Short, ipV4SrcAddr: Long, ipV4DstAddr: Long, ipv4NextHop: Int, inPkts: Short, inBytes:Int) extends  NetStructure
 
   //def actor(actor: => Actor, name: Option[String] = None, dispatcherName: Option[String] = None)(implicit actorRefFactory: ActorRefFactory): ActorRef = {
+
+  case class SequenceFileWriterRunner[K<:Writable,V<:Writable](writer:SequenceFile.Writer, seq : Seq[(K,V)] = Seq.empty ) {
+
+    @throws[IOException]
+    def _dumpSeqToWriter(s : GenSeq[(K,V)]) =
+      s.foreach ( (e) =>  writer.append(e._1,e._2))
+
+    @throws[IOException]
+    def run() = _dumpSeqToWriter(seq)
+
+    def parRun() = _dumpSeqToWriter(seq.par)
+  }
+
 
 }

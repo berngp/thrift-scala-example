@@ -21,23 +21,24 @@ import collection.immutable.TreeMap
 import collection.mutable
 import collection.mutable.ArrayBuffer
 import java.{util => jutil}
-import net.liftweb.common.{Failure, Full}
+import net.liftweb.common.{Box, Failure, Full}
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.SequenceFile
+import org.apache.hadoop.io._
 import org.apache.hadoop.io.SequenceFile.CompressionType
 import org.apache.hadoop.io.SequenceFile.Metadata
 import org.apache.hadoop.io.SequenceFile.Writer
-import org.apache.hadoop.io.Text
 import org.apache.hadoop.util.Progressable
 import scala.collection.JavaConversions._
+import net.liftweb.common.Full
+import scala.Some
 
 
 object HadoopWriter {
 
   case class HadoopWriterRecipe private[HadoopWriter](hadoopConf: HadoopConf, options: Seq[Writer.Option]) {
 
-    def asSequenceFileWriter() = try {
+    def asSequenceFileWriter(): Box[SequenceFile.Writer] = try {
       Full(SequenceFile.createWriter(hadoopConf, options: _*))
     } catch {
       case iae: IllegalArgumentException =>
@@ -52,23 +53,25 @@ object HadoopWriter {
    * TODO Document how this works to ensure all required attributes are set before we generate a writer.
    */
   abstract class BUILDER_REQ
+
   /** */
-  abstract class PRESENT extends  BUILDER_REQ
+  abstract class PRESENT extends BUILDER_REQ
+
   /** */
   abstract class MISSING extends BUILDER_REQ
 
-  class HadoopWriterBuilder[HC, HF] private[HadoopWriter](val theHadoopConf: HadoopConf = null,
-                                                          val theFile: Option[Either[String, Path]] = None,
-                                                          val theMeta: Option[TreeMap[String, String]] = None,
-                                                          val theBufferSize: Option[Int] = None,
-                                                          val theBlockSize: Option[Long] = None,
-                                                          val theCompression: Option[CompressionType] = Some(CompressionType.NONE),
-                                                          val theReplication: Option[Short] = Some(0),
-                                                          val theKeyClass: Option[Class[_]] = Some(classOf[Text]),
-                                                          val theValueClass: Option[Class[_]] = Some(classOf[Text]),
-                                                          val theProgressableReporter: Option[Progressable] = None) {
+  class HadoopWriterBuilder[HC <: BUILDER_REQ, HF <: BUILDER_REQ] private[HadoopWriter](val theHadoopConf: HadoopConf = null,
+                                                                                        val theFile: Option[Either[String, Path]] = None,
+                                                                                        val theMeta: Option[TreeMap[String, String]] = None,
+                                                                                        val theBufferSize: Option[Int] = None,
+                                                                                        val theBlockSize: Option[Long] = None,
+                                                                                        val theCompression: Option[CompressionType] = Some(CompressionType.NONE),
+                                                                                        val theReplication: Option[Short] = Some(0),
+                                                                                        val theKeyClass: Option[Class[_]] = Some(classOf[Text]),
+                                                                                        val theValueClass: Option[Class[_]] = Some(classOf[Text]),
+                                                                                        val theProgressableReporter: Option[Progressable] = None) {
 
-    private def _builder[HC, HF] = {
+    private def _builder[HC <: BUILDER_REQ, HF <: BUILDER_REQ] = {
       new HadoopWriterBuilder[HC, HF](_, _, _, _, _, _, _, _, _, _)
     }
 
@@ -76,12 +79,12 @@ object HadoopWriter {
       _builder[PRESENT, HF](c, theFile, theMeta, theBufferSize, theBlockSize, theCompression, theReplication, theKeyClass, theValueClass, theProgressableReporter)
 
 
-    def withFile(f: Either[String, Path]):HadoopWriterBuilder[HC,PRESENT] =
+    def withFile(f: Either[String, Path]): HadoopWriterBuilder[HC, PRESENT] =
       _builder[HC, PRESENT](theHadoopConf, Some(f), theMeta, theBufferSize, theBlockSize, theCompression, theReplication, theKeyClass, theValueClass, theProgressableReporter)
 
-    def withFile(f: String):HadoopWriterBuilder[HC,PRESENT] = withFile(Left(f))
+    def withFile(f: String): HadoopWriterBuilder[HC, PRESENT] = withFile(Left(f))
 
-    def withFile(f: Path):HadoopWriterBuilder[HC,PRESENT] = withFile(Right(f))
+    def withFile(f: Path): HadoopWriterBuilder[HC, PRESENT] = withFile(Right(f))
 
     def withMeta(m: TreeMap[String, String]) =
       _builder(theHadoopConf, theFile, Some(m), theBufferSize, theBlockSize, theCompression, theReplication, theKeyClass, theValueClass, theProgressableReporter)
@@ -153,6 +156,22 @@ object HadoopWriter {
 
   implicit class StringToHadoopText(string: String) {
     def toText() = new Text(string)
+  }
+
+  implicit class LongToHadoopWritable(long: Long) {
+    def toWritable() = new LongWritable(long)
+  }
+
+  implicit class ShortToHadoopWritable(short: Short) {
+    def toWritable() = new ShortWritable(short)
+  }
+
+  implicit class MatpToHadoopWritable[K <: Writable, V <: Writable](map: Map[K, V]) {
+    def toWritable() = {
+      val mapWritable = new MapWritable()
+      mapWritable.putAll(map)
+      mapWritable
+    }
   }
 
 }
