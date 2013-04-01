@@ -82,7 +82,7 @@ object MyBuild extends Build {
 
   /** */
   lazy val myProject = Project(
-    id = "thrift-scala-example",
+    id = "root",
     base = file("."),
     settings = sharedSettings
   ).aggregate(thriftSchemaPrj, producerPrj, consumerPrj)
