@@ -16,10 +16,8 @@
 
 package com.github.berngp.thriftexample
 
-import net.liftweb.common.{Failure, Full, Empty}
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers._
-import java.util
 
 /** */
 class IPv4AddressSpec extends FlatSpec {
@@ -31,21 +29,21 @@ class IPv4AddressSpec extends FlatSpec {
     val str = "192.168.1.1"
     val ints = str.split('.').map(_.toInt)
     val bytes = ints.map(_.toByte)
-    val numValue:Long = 3232235777L
+    val numValue: Long = 3232235777L
   }
 
   it should "build using four bytes" in {
     val b = fixtures.bytes
-    check(IPv4Address(b(0),b(1),b(2),b(3)))
+    check(IPv4Address(b(0), b(1), b(2), b(3)))
   }
 
   it should "build using four ints" in {
     val b = fixtures.ints
-    check(IPv4Address(b(0),b(1),b(2),b(3)))
+    check(IPv4Address(b(0), b(1), b(2), b(3)))
   }
 
   it should "build using ints splats" in {
-    check(IPv4Address(fixtures.ints :_*))
+    check(IPv4Address(fixtures.ints: _*))
   }
 
   it should "build using an array of bytes" in {
@@ -62,18 +60,18 @@ class IPv4AddressSpec extends FlatSpec {
 
   it should "get the Integer value of an IP" in {
     val optIp = IPv4Address(fixtures.str)
-    optIp should be ('defined)
-    optIp.get.number should be (fixtures.numValue)
+    optIp should be('defined)
+    optIp.get.number should be(fixtures.numValue)
   }
 
   it should "build from an Integer value of an IP" in {
     val ipOpt = IPv4Address(fixtures.numValue)
-    ipOpt should  be ('defined)
-    ipOpt.get.address should be (fixtures.bytes)
+    ipOpt should be('defined)
+    ipOpt.get.address should be(fixtures.bytes)
   }
 
   def check(opt: Option[IPv4Address]) = {
-    opt should be ('defined)
+    opt should be('defined)
     val ip = opt.get
     ip.address.length should be(4)
     ip.address.zipWithIndex.foreach[Unit](t => fixtures.bytes(t._2) should be(t._1))
