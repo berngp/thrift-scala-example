@@ -85,23 +85,23 @@ object NetPacketTrafficGenerator {
    * @param sourceAddressSet
    * @param voter
    * @param byteSize
-   * @param unitSize
+   * @param size
    */
   case class NetPacketTrafficPlanRecipe private[NetPacketTrafficGenerator](destinationAddressSet: Set[IPv4Address],
                                                                            sourceAddressSet: Set[IPv4Address],
                                                                            voter: Voting.Strategy,
                                                                            byteSize: BytePacketSize.Strategy,
-                                                                           unitSize: Int) {
+                                                                           size: Int) {
 
     require(!(destinationAddressSet == null || destinationAddressSet.isEmpty), "Please provide a non-empty _Destination Address Set_")
     require(!(sourceAddressSet == null || sourceAddressSet.isEmpty), "Please provide a non-empty _Source Address Set_ ")
     require(voter != null, "A voting strategy is expected.")
     require(voter != null, "A byte size strategy is expected.")
-    require(unitSize >= 0, "The unitSize:Int should be a positive value")
+    require(size >= 0, "The size:Int should be a positive value")
 
 
     def getPlan: NetPacketTrafficPlan = {
-      val timeSeries = _getTimeSeries(unitSize)
+      val timeSeries = _getTimeSeries(size)
       val histogram = _getHistogram(timeSeries)
       NetPacketTrafficPlan(histogram, timeSeries)
 
@@ -112,7 +112,7 @@ object NetPacketTrafficGenerator {
      * @param size
      * @return
      */
-    private[thriftexample] def _getTimeSeries(size: Int) = (0 to size).toSeq.map(_generateNetBin(_))
+    private[thriftexample] def _getTimeSeries(size: Int) = (1 to size).toSeq.map(_generateNetBin(_))
 
     /**
      *
@@ -187,7 +187,7 @@ object NetPacketTrafficGenerator {
                                                                                                              val sourceAddressSet: Set[IPv4Address] = Set.empty,
                                                                                                              val voter: Option[Voting.Strategy] = Some(Voting.random()),
                                                                                                              val byteSize: Option[BytePacketSize.Strategy] = Some(BytePacketSize.constant(256)),
-                                                                                                             val unitSize: Option[Int] = Some(100)) {
+                                                                                                             val size: Option[Int] = Some(100)) {
 
     private def _builder[DA <: BUILDER_REQ, SA <: BUILDER_REQ] = {
       new NetTrafficPacketPlanBuilder[DA, SA](_, _, _, _, _)
@@ -195,26 +195,26 @@ object NetPacketTrafficGenerator {
 
     def withDestinationsAddresses(d: Set[IPv4Address]) = {
       require(d.nonEmpty, "Destination Addresses Expected!")
-      _builder[PRESENT, SA](d, sourceAddressSet, voter, byteSize, unitSize)
+      _builder[PRESENT, SA](d, sourceAddressSet, voter, byteSize, size)
     }
 
-    def withSourceAddresses(s: Set[IPv4Address]) = {
+    def withSourceAddresses(s : Set[IPv4Address]) = {
       require(s.nonEmpty, "Source Addresses expected!")
-      _builder[DA, PRESENT](destinationAddressSet, s, voter, byteSize, unitSize)
+      _builder[DA, PRESENT](destinationAddressSet, s, voter, byteSize, size)
     }
 
     def withVoter(v: Voting.Strategy) = {
       require(v != null, "Expected a voter but got null!")
-      _builder[DA, SA](destinationAddressSet, sourceAddressSet, Some(v), byteSize, unitSize)
+      _builder[DA, SA](destinationAddressSet, sourceAddressSet, Some(v), byteSize, size)
     }
 
     def withByteSizeStrategy(b: BytePacketSize.Strategy) = {
       require(b != null, "Expected Byte Strategy Strategy but got null!")
-      _builder[DA, SA](destinationAddressSet, sourceAddressSet, voter, Some(b), unitSize)
+      _builder[DA, SA](destinationAddressSet, sourceAddressSet, voter, Some(b), size)
     }
 
-    def withUnitSize(u: Int) = {
-      require(u > 0, "Expected Unit Strategy to be greater than 0!")
+    def withSize(u: Int) = {
+      require(u > 0, "Expected Size to be greater than 0!")
       _builder[DA, SA](destinationAddressSet, sourceAddressSet, voter, byteSize, Some(u))
     }
 
@@ -223,7 +223,7 @@ object NetPacketTrafficGenerator {
 
   implicit def enableBuild(b: NetTrafficPacketPlanBuilder[PRESENT, PRESENT]) = new {
     def build() = {
-      new NetPacketTrafficPlanRecipe(b.destinationAddressSet, b.sourceAddressSet, b.voter.get, b.byteSize.get, b.unitSize.get)
+      new NetPacketTrafficPlanRecipe(b.destinationAddressSet, b.sourceAddressSet, b.voter.get, b.byteSize.get, b.size.get)
     }
   }
 
