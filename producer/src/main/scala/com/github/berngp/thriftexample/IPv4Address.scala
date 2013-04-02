@@ -69,12 +69,11 @@ class IPv4Address private(o1: Byte, o2: Byte, o3: Byte, o4: Byte) {
  */
 object IPv4Address {
 
-  lazy val MAX_IPV_NUMERIC_VALUE = "256.256.256.256".
+  lazy val MAX_IPV_NUMERIC_VALUE = "255.255.255.255".
     split('.').reverse.map(_.toLong).zipWithIndex.map(t => (t._1 << (t._2 * 8L))).reduce(_ | _)
 
   /** Singleton `IPv4Address` for the local loop address. */
   val LOCALHOST = IPv4Address(127, 0, 0, 1)
-
 
   private def validateOctet(b: Byte) = {
     (b & 0xFF) >= 0x00 && (b & 0xFF) < 0xFF
