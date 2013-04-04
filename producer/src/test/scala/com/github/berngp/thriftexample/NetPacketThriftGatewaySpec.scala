@@ -22,16 +22,16 @@ import org.scalatest.matchers.ShouldMatchers._
 
 
 /** */
-class ThriftProducerSpec extends FlatSpec {
+class NetPacketThriftGatewaySpec extends FlatSpec {
 
 
   behavior of "A Thrift Producer"
 
   val kNetRecord = NetRecord(1, 2, 3, 4, 5, 6, 7)
 
-  import ThriftProducer.NetBinPacketToThrift
-  import ThriftProducer.NetPacketHeaderToThrift
-  import ThriftProducer.NetRecordToThrift
+  import NetPacketThriftGateway.NetBinPacketToThrift
+  import NetPacketThriftGateway.NetPacketHeaderToThrift
+  import NetPacketThriftGateway.NetRecordToThrift
 
   it should "transform a _NetRecord_ to its thrift equivalent" in {
     kNetRecord.asThriftBox() match {

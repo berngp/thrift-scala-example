@@ -31,23 +31,32 @@ class NetPacketTrafficGeneratorSpec extends FlatSpec with SequentialNestedSuiteE
   }
 
   object fixtures {
-    val destinationAddresses = (1 to 5).map("192.168.1." + _).map(IPv4Address(_)).map(_.get).toSet
+    val destinationAddresses = (1 to 10).map("192.168.1." + _).map(IPv4Address(_)).map(_.get).toSet
     val sourceAddresses = (1 to 10).map("192.168.100." + _).map(IPv4Address(_)).map(_.get).toSet
     val timeSeriesSzie = 10
+
   }
 
-  it should "instantiate a builder" in {
+  it should "instantiate a hdfsWriter" in {
     buffer.builderBox = Some(builder())
     buffer.builderBox should be('defined)
   }
 
-  it should "get a basic generator" in {
+  it should "get a generator with a constant voter" in {
     val b = buffer.builderBox.get
-    val g = b withDestinationsAddresses (fixtures.destinationAddresses) withSourceAddresses (fixtures.sourceAddresses) withSize (fixtures.timeSeriesSzie) build()
+    val g = b
+      .withDestinationsAddresses(fixtures.destinationAddresses)
+      .withSourceAddresses(fixtures.sourceAddresses)
+      .withSize(fixtures.timeSeriesSzie)
+      .withVoter(Voting.constant)
+      .build()
+
     val p = g.getPlan
 
-    println(p.timeSeries)
     p.timeSeries.size should be(g.size)
+    p.timeSeries.foreach(b => b.records.size should be(fixtures.destinationAddresses.size))
   }
+
+  it should "get a generator with a gassuian voter" in (pending)
 
 }

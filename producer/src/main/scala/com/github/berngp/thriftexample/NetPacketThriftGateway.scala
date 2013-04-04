@@ -22,12 +22,10 @@ import scala.collection.JavaConversions._
 import thrift.example.{
 BinPacket => ThriftBinPacket,
 NetRecord => ThriftNetRecord,
-PacketHeader => ThriftHeader
+PacketHeader => ThriftNetHeader
 }
-import org.apache.hadoop.io.Writable
 
-
-protected[thriftexample] object ThriftProducer extends ControlHelpers with Loggable {
+protected[thriftexample] object NetPacketThriftGateway extends ControlHelpers with Loggable {
 
   def netBinPacketToThrift(binPacket: NetBinPacket): Box[ThriftBinPacket] = {
 
@@ -36,10 +34,10 @@ protected[thriftexample] object ThriftProducer extends ControlHelpers with Logga
     val recordsBox = netRecordsToThrift(binPacket.records)
 
     (headerBox, recordsBox) match {
-      case (Full(header: ThriftHeader), Full(records: List[ThriftNetRecord])) =>
+      case (Full(header: ThriftNetHeader), Full(records: List[ThriftNetRecord])) =>
         header.setCount(records.size)
         Full(new ThriftBinPacket(header, records))
-      case (Full(header: ThriftHeader), Empty) =>
+      case (Full(header: ThriftNetHeader), Empty) =>
         Full(new ThriftBinPacket(header, List()))
       case (Empty, Empty) =>
         Empty
@@ -56,8 +54,8 @@ protected[thriftexample] object ThriftProducer extends ControlHelpers with Logga
     }
   }
 
-  def packetHeaderToThrift(header: NetPacketHeader): Box[ThriftHeader] =
-    tryo(new ThriftHeader(header.version, 0, header.sysUpTime, header.unixSecs, header.sequenceNumber, header.sourceId))
+  def packetHeaderToThrift(header: NetPacketHeader): Box[ThriftNetHeader] =
+    tryo(new ThriftNetHeader(header.version, 0, header.sysUpTime, header.unixSecs, header.sequenceNumber, header.sourceId))
 
   def netRecordsToThrift(netRecords: List[NetRecord] = List.empty): Box[List[ThriftNetRecord]] =
     tryo(netRecords.map(
@@ -70,7 +68,7 @@ protected[thriftexample] object ThriftProducer extends ControlHelpers with Logga
       tryo(new ThriftNetRecord(r.flowSetId, r.templateId, r.ipV4SrcAddr, r.ipV4DstAddr, r.ipv4NextHop, r.inPkts, r.inBytes))
 
   implicit class NetPacketHeaderToThrift(val header: NetPacketHeader) {
-    def asThriftBox(): Box[ThriftHeader] = packetHeaderToThrift(header)
+    def asThriftBox(): Box[ThriftNetHeader] = packetHeaderToThrift(header)
   }
 
   implicit class NetRecordToThrift(val record: NetRecord) {
@@ -79,6 +77,12 @@ protected[thriftexample] object ThriftProducer extends ControlHelpers with Logga
 
   implicit class NetBinPacketToThrift(val binPacket: NetBinPacket) {
     def asThriftBox(): Box[ThriftBinPacket] = netBinPacketToThrift(binPacket)
+  }
+
+  class WritableThriftBinPacket(thrift:ThriftBinPacket) extends ThriftBinPacket(thrift) with ThriftHDFSWritable[ThriftBinPacket, ThriftBinPacket._Fields]
+
+  implicit class ThriftBinPacketToHDFSWritable(thrift: ThriftBinPacket) {
+    def toWritable():WritableThriftBinPacket = new WritableThriftBinPacket(thrift)
   }
 
 }

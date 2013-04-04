@@ -34,13 +34,30 @@ object NetPacketTrafficGenerator {
       def vote(c: IPv4Address): Boolean = flag
     }
 
-    def constant(flag: Boolean = true) = new Constant(flag)
+    val constant = new Constant(true)
 
-    class Guassian(varianceTable: Map[IPv4Address, Double]) extends Strategy {
-      def vote(candidate: IPv4Address) = false
+    /**
+     * @param varianceTable
+     */
+    class Gaussian(varianceTable: Map[IPv4Address, Int],
+                   distribution:Map[Int,Double] = Gaussian.GAUSSIAN_CURVE_BUCKETS) extends Strategy {
+
+      def vote(candidate: IPv4Address) = {
+          false
+      }
     }
 
-    def gaussian(v: Map[IPv4Address, Double]) = new Guassian(v)
+    object Gaussian {
+
+      val GAUSSIAN_CURVE_BUCKETS = Map( ( 1 -> 38.2D ), ( 2 -> 30D ), ( 3 -> 18.4D ), ( 4 -> 8.8D ), ( 5 -> 3.4D ) )
+
+      def randomTable(s:Set[IPv4Address]) = {
+      }
+      def table(sets:Set[IPv4Address]*) = {
+      }
+    }
+
+    def gaussian(v: Map[IPv4Address, Int]) = new Gaussian(v)
 
     class Random extends Strategy {
       def vote(candidate: IPv4Address) = Random.nextBoolean()
@@ -172,7 +189,7 @@ object NetPacketTrafficGenerator {
 
 
   /**
-   * Type used to mark an attribute of the builder as required.
+   * Type used to mark an attribute of the hdfsWriter as required.
    * TODO Document how this works to ensure all required attributes are set before we generate a writer.
    */
   abstract class BUILDER_REQ

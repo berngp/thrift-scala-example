@@ -16,34 +16,63 @@
 
 package com.github.berngp.thriftexample
 
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
+import java.io._
 import org.apache.hadoop.io.serializer.{Serializer, Deserializer}
 import org.apache.hadoop.util.ReflectionUtils
-import org.apache.thrift.{TFieldIdEnum, TBase, TException}
-import org.apache.thrift.protocol.TBinaryProtocol
-import org.apache.thrift.protocol.TProtocol
+import org.apache.thrift._
+import org.apache.thrift.protocol.{TCompactProtocol, TBinaryProtocol, TProtocol}
 import org.apache.thrift.transport.TIOStreamTransport
+import collection.mutable.ArrayBuffer
+import net.liftweb.common.Logger
 
+
+trait ThriftHDFSWritable[T <: TBase[_, _], F <: TFieldIdEnum]
+  extends TBase[T, F]
+  with org.apache.hadoop.io.Writable
+  with Logger {
+
+  @throws[IOException]
+  def write(out: DataOutput) = {
+    error("Writting from " + this.getClass)
+    val ser = new TSerializer(new TBinaryProtocol.Factory())
+    out.write(ser.serialize(this))
+    error("Written.")
+  }
+
+  @throws[IOException]
+  def readFields(in: DataInput) {
+    val buf: ArrayBuffer[Byte] = ArrayBuffer()
+    try {
+      buf += in.readByte()
+    } catch {
+      case e: EOFException =>
+        val des = new TDeserializer(new TCompactProtocol.Factory())
+        des.deserialize(this, buf.toArray)
+    }
+  }
+}
 
 /** */
-class ThriftSerialization[T <: TBase[_,_] : Manifest, F <: TFieldIdEnum] extends org.apache.hadoop.io.serializer.Serialization[T] {
+class ThriftSerialization[T <: TBase[T, _]]
+  extends org.apache.hadoop.io.serializer.Serialization[T] with Logger {
 
-  def accept(c: Class[_]): Boolean = c.isAssignableFrom(reflect.classTag[T].runtimeClass)
+  def accept(c: Class[_]): Boolean = {
+    debug("Accepting " + c + "?")
+    throw new IllegalStateException("Accepting " + c + "?")
+    (c: @unchecked).isInstanceOf[TBase[_, _]]
+  }
 
   def getSerializer(c: Class[T]): Serializer[T] = new TSerializerAdapter
 
   def getDeserializer(c: Class[T]): Deserializer[T] = new TDeserializerAdapter(c)
 
-  class TSerializerAdapter private[ThriftSerialization]() extends org.apache.hadoop.io.serializer.Serializer[T] {
-
+  class TSerializerAdapter extends org.apache.hadoop.io.serializer.Serializer[T] {
     var transport: Option[TIOStreamTransport] = None
     var protocol: Option[TProtocol] = None
 
     def open(out: OutputStream) = synchronized {
+      error("Opening ThriftSerialization")
       transport = Some(new TIOStreamTransport(out))
-
       transport match {
         case Some(t) =>
           protocol = Some(new TBinaryProtocol(t))
@@ -54,6 +83,8 @@ class ThriftSerialization[T <: TBase[_,_] : Manifest, F <: TFieldIdEnum] extends
 
     @throws[IOException]
     def serialize(t: T) {
+      error("Serializing using " + this.getClass)
+      throw new IllegalStateException("Serializing using " + this.getClass)
       protocol match {
         case Some(p) =>
           try {
@@ -63,7 +94,7 @@ class ThriftSerialization[T <: TBase[_,_] : Manifest, F <: TFieldIdEnum] extends
               throw new IOException(e)
           }
         case None =>
-          throw new IllegalArgumentException("Protocol not defined, please `open` the Serializer first!")
+          throw new IllegalStateException("Protocol not defined, please `open` the Serializer first!")
       }
     }
 
@@ -77,7 +108,7 @@ class ThriftSerialization[T <: TBase[_,_] : Manifest, F <: TFieldIdEnum] extends
     }
   }
 
-  class TDeserializerAdapter private[ThriftSerialization](tClass: Class[T]) extends org.apache.hadoop.io.serializer.Deserializer[T] {
+  class TDeserializerAdapter(tClass: Class[T]) extends org.apache.hadoop.io.serializer.Deserializer[T] {
     var transport: TIOStreamTransport = null
     var protocol: TProtocol = null
 
@@ -106,7 +137,6 @@ class ThriftSerialization[T <: TBase[_,_] : Manifest, F <: TFieldIdEnum] extends
         case e: TException =>
           throw new IOException(e)
       }
-
       _obj
     }
 
