@@ -85,7 +85,7 @@ object MyBuild extends Build {
     id = "root",
     base = file("."),
     settings = sharedSettings
-  ).aggregate(thriftSchemaPrj, producerPrj, consumerPrj)
+  ).aggregate(thriftSchemaPrj, corePrj, examplesPrj)
 
   /** */
   lazy val thriftSchemaPrj = Project(
@@ -97,17 +97,17 @@ object MyBuild extends Build {
     .configs(Thrift)
 
   /** */
-  lazy val producerPrj = Project(
-    id = "producer",
-    base = file("producer"),
+  lazy val corePrj = Project(
+    id = "core",
+    base = file("core"),
     settings = sharedSettings
   ).dependsOn(thriftSchemaPrj)
 
   /** */
-  lazy val consumerPrj = Project(
-    id = "consumer",
-    base = file("consumer"),
+  lazy val examplesPrj = Project(
+    id = "examples",
+    base = file("examples"),
     settings = sharedSettings
-  ).dependsOn(thriftSchemaPrj)
+  ).dependsOn(corePrj)
 
 }
