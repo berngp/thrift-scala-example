@@ -53,7 +53,7 @@ class NetPacketAsThriftFilesSpec extends FlatSpec with SequentialNestedSuiteExec
     val timeSeriesSize = 10
     val conf = hadoopConf()
     val fs = new LocalFileSystem( HadoopFileSystem.get(conf) )
-    val seqFilesDir = new Path("producer/target/net-packets-thrift")
+    val seqFilesDir = new Path("./target/net-packets-thrift")
   }
 
   it should "instantiate a hdfsWriter" in {

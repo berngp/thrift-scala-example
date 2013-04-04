@@ -37,7 +37,7 @@ class HadoopSequenceFileWriterSpec extends FlatSpec with SequentialNestedSuiteEx
   object fixtures {
     val conf = new HadoopConf()
     val fs = new LocalFileSystem(HadoopFileSystem.get(conf))
-    val filePath = "producer/target/sequence-file-writer"
+    val filePath = "./target/sequence-file-writer"
   }
 
   it should "instantiate a HDFS Sequence File Writer with a known Hadoop Conf" in {
