@@ -82,7 +82,7 @@ object HadoopSequenceFileWriter {
                                                                                                                 val theMeta: Option[TreeMap[String, String]] = None,
                                                                                                                 val theBufferSize: Option[Int] = None,
                                                                                                                 val theBlockSize: Option[Long] = None,
-                                                                                                                val theCompression: Option[CompressionType] = Some(CompressionType.NONE),
+                                                                                                                val theCompression: Option[CompressionType] = Some(CompressionType.BLOCK),
                                                                                                                 val theReplication: Option[Short] = Some(0),
                                                                                                                 val theKeyClass: Option[Class[_]] = Some(classOf[NullWritable]),
                                                                                                                 val theValueClass: Option[Class[_]] = Some(classOf[Text]),
