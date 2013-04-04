@@ -16,10 +16,9 @@
 
 package com.github.berngp.thriftexample
 
-import net.liftweb.common.{Failure, Box, Empty}
+import net.liftweb.common.Failure
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
-import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem, LocalFileSystem, ChecksumFileSystem, Path}
-import org.apache.hadoop.io.SequenceFile
+import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem, LocalFileSystem, Path}
 import org.scalatest.matchers.ShouldMatchers._
 import org.scalatest.{SequentialNestedSuiteExecution, FlatSpec}
 
@@ -30,44 +29,44 @@ class HadoopSequenceFileWriterSpec extends FlatSpec with SequentialNestedSuiteEx
   import HadoopSequenceFileWriter._
 
   object buffer {
-    var builderBox: Option[HadoopSequenceFileWriterBuilder[PRESENT, _ <:BUILDER_REQ]] = None
+    var builderBox: Option[HadoopSequenceFileWriterBuilder[PRESENT, _ <: BUILDER_REQ]] = None
   }
 
   behavior of "A Hadoop Writer Builder"
 
   object fixtures {
     val conf = new HadoopConf()
-    val fs = new LocalFileSystem( HadoopFileSystem.get(conf) )
+    val fs = new LocalFileSystem(HadoopFileSystem.get(conf))
     val filePath = "producer/target/sequence-file-writer"
   }
 
   it should "instantiate a HDFS Sequence File Writer with a known Hadoop Conf" in {
-    buffer.builderBox = Some( hdfsWriter() withHadoopConf fixtures.conf )
+    buffer.builderBox = Some(hdfsWriter() withHadoopConf fixtures.conf)
     buffer.builderBox should be('defined)
   }
 
   it should "write to a _Sequence Writer_ created from the builder" in {
     val path = fixtures.filePath + "/writer.text"
     val writerBox = buffer.builderBox.get withFile (path) build() asSequenceFileWriter()
-    writerBox should be ('defined)
+    writerBox should be('defined)
 
     val writer = writerBox.get
     writer.append(Nil.toWritable(), "value".toWritable())
     writer.close()
 
-    fixtures.fs.exists(new Path(path) ) should be(true)
+    fixtures.fs.exists(new Path(path)) should be(true)
   }
 
   it should "write to a _Sequence Writer_ given by a Monad that closes the writer" in {
     val path = fixtures.filePath + "/do-with-writer.text"
     buffer.builderBox.get withFile (path) build() doWithSequenceFileWriter {
       writer =>
-           writer.append(Nil.toWritable(), "value".toWritable())
+        writer.append(Nil.toWritable(), "value".toWritable())
     } match {
-      case f:Failure =>
+      case f: Failure =>
         fail(f.msg, f.exception.openOr(new IllegalStateException("Exception expected!")))
       case _ =>
     }
-    fixtures.fs.exists(new Path(path) ) should be(true)
+    fixtures.fs.exists(new Path(path)) should be(true)
   }
 }
