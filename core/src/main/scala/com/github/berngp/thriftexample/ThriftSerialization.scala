@@ -26,17 +26,15 @@ import collection.mutable.ArrayBuffer
 import net.liftweb.common.Logger
 
 
-trait ThriftHDFSWritable[T <: TBase[_, _], F <: TFieldIdEnum]
+trait ThriftHadoopWritable[T <: TBase[_, _], F <: TFieldIdEnum]
   extends TBase[T, F]
   with org.apache.hadoop.io.Writable
   with Logger {
 
   @throws[IOException]
   def write(out: DataOutput) = {
-    error("Writting from " + this.getClass)
     val ser = new TSerializer(new TBinaryProtocol.Factory())
     out.write(ser.serialize(this))
-    error("Written.")
   }
 
   @throws[IOException]
@@ -57,9 +55,7 @@ class ThriftSerialization[T <: TBase[T, _]]
   extends org.apache.hadoop.io.serializer.Serialization[T] with Logger {
 
   def accept(c: Class[_]): Boolean = {
-    debug("Accepting " + c + "?")
-    throw new IllegalStateException("Accepting " + c + "?")
-    (c: @unchecked).isInstanceOf[TBase[_, _]]
+    (c: @unchecked).getInterfaces.contains(classOf[TBase[_,_]])
   }
 
   def getSerializer(c: Class[T]): Serializer[T] = new TSerializerAdapter
@@ -71,7 +67,6 @@ class ThriftSerialization[T <: TBase[T, _]]
     var protocol: Option[TProtocol] = None
 
     def open(out: OutputStream) = synchronized {
-      error("Opening ThriftSerialization")
       transport = Some(new TIOStreamTransport(out))
       transport match {
         case Some(t) =>
@@ -83,8 +78,6 @@ class ThriftSerialization[T <: TBase[T, _]]
 
     @throws[IOException]
     def serialize(t: T) {
-      error("Serializing using " + this.getClass)
-      throw new IllegalStateException("Serializing using " + this.getClass)
       protocol match {
         case Some(p) =>
           try {

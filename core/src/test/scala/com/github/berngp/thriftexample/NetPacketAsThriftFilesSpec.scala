@@ -53,7 +53,7 @@ class NetPacketAsThriftFilesSpec extends FlatSpec with SequentialNestedSuiteExec
     val timeSeriesSize = 10
     val conf = hadoopConf()
     val fs = new LocalFileSystem( HadoopFileSystem.get(conf) )
-    val seqFilesDir = new Path("./target/net-packets-thrift")
+    val seqFilesDir = new Path("./target/hdfs/net-packets-thrift")
   }
 
   it should "instantiate a hdfsWriter" in {
@@ -78,7 +78,7 @@ class NetPacketAsThriftFilesSpec extends FlatSpec with SequentialNestedSuiteExec
   }
 
 
-  it should "persist the Thrift Objects into HDFs using Sequence Files using the ThriftSerialization" in {
+  it should "persist the Thrift Objects into Sequence Files using the ThriftSerialization" in {
     val b = hdfsWriter() withHadoopConf fixtures.conf withValueClass classOf[ThriftBinPacket]
     buffer.thrifts.get.view.zipWithIndex.foreach {
       t =>
@@ -94,8 +94,9 @@ class NetPacketAsThriftFilesSpec extends FlatSpec with SequentialNestedSuiteExec
     }
   }
 
+  it should "read the Thrift Objects contained in the SequenceFiles using the ThriftSerialization" in (pending)
 
-  it should "persist the Thrift Objects into HDFs using SequenceFiles with WritableThriftBinPacket" in {
+  it should "persist the Thrift Objects into SequenceFiles usintg the WritableThriftBinPacket" in {
     val b = hdfsWriter() withHadoopConf fixtures.conf withValueClass classOf[WritableThriftBinPacket]
     buffer.thrifts.get.view.zipWithIndex.foreach {
       t =>
@@ -110,5 +111,7 @@ class NetPacketAsThriftFilesSpec extends FlatSpec with SequentialNestedSuiteExec
         }
     }
   }
+
+  it should "persist the Thrift Objects into HDFs using SequenceFiles with WritableThriftBinPacket" in (pending)
 
 }

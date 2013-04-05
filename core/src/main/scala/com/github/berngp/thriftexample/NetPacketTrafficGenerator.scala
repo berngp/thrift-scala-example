@@ -242,6 +242,10 @@ object NetPacketTrafficGenerator {
     def build() = {
       new NetPacketTrafficPlanRecipe(b.destinationAddressSet, b.sourceAddressSet, b.voter.get, b.byteSize.get, b.size.get)
     }
+
+    def plan() = {
+      build().getPlan
+    }
   }
 
   def builder() =

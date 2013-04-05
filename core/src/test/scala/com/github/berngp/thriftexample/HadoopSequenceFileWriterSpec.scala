@@ -21,6 +21,7 @@ import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem, LocalFileSystem, Path}
 import org.scalatest.matchers.ShouldMatchers._
 import org.scalatest.{SequentialNestedSuiteExecution, FlatSpec}
+import org.apache.hadoop.io.SequenceFile
 
 
 /** */
@@ -37,7 +38,7 @@ class HadoopSequenceFileWriterSpec extends FlatSpec with SequentialNestedSuiteEx
   object fixtures {
     val conf = new HadoopConf()
     val fs = new LocalFileSystem(HadoopFileSystem.get(conf))
-    val filePath = "./target/sequence-file-writer"
+    val filePath = "./target/hdfs/sequence-file-writer"
   }
 
   it should "instantiate a HDFS Sequence File Writer with a known Hadoop Conf" in {
@@ -57,6 +58,9 @@ class HadoopSequenceFileWriterSpec extends FlatSpec with SequentialNestedSuiteEx
     fixtures.fs.exists(new Path(path)) should be(true)
   }
 
+  it should "read the _Sequence File_" in (pending)
+
+
   it should "write to a _Sequence Writer_ given by a Monad that closes the writer" in {
     val path = fixtures.filePath + "/do-with-writer.text"
     buffer.builderBox.get withFile (path) build() doWithSequenceFileWriter {
@@ -69,4 +73,6 @@ class HadoopSequenceFileWriterSpec extends FlatSpec with SequentialNestedSuiteEx
     }
     fixtures.fs.exists(new Path(path)) should be(true)
   }
+
+  it should "read a _Sequence File_ written by the Monad" in (pending)
 }

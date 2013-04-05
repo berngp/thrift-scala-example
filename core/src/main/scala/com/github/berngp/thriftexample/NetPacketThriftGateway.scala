@@ -25,7 +25,7 @@ NetRecord => ThriftNetRecord,
 PacketHeader => ThriftNetHeader
 }
 
-protected[thriftexample] object NetPacketThriftGateway extends ControlHelpers with Loggable {
+object NetPacketThriftGateway extends ControlHelpers with Loggable {
 
   def netBinPacketToThrift(binPacket: NetBinPacket): Box[ThriftBinPacket] = {
 
@@ -79,7 +79,7 @@ protected[thriftexample] object NetPacketThriftGateway extends ControlHelpers wi
     def asThriftBox(): Box[ThriftBinPacket] = netBinPacketToThrift(binPacket)
   }
 
-  class WritableThriftBinPacket(thrift:ThriftBinPacket) extends ThriftBinPacket(thrift) with ThriftHDFSWritable[ThriftBinPacket, ThriftBinPacket._Fields]
+  class WritableThriftBinPacket(thrift:ThriftBinPacket) extends ThriftBinPacket(thrift) with ThriftHadoopWritable[ThriftBinPacket, ThriftBinPacket._Fields]
 
   implicit class ThriftBinPacketToHDFSWritable(thrift: ThriftBinPacket) {
     def toWritable():WritableThriftBinPacket = new WritableThriftBinPacket(thrift)
