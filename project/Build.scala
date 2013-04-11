@@ -4,6 +4,7 @@ import sbt._
 import Keys._
 import sbtassembly.Plugin._
 import sbtgitflow.ReleasePlugin._
+import net.virtualvoid.sbt.graph.Plugin._
 import com.github.bigtoast.sbtthrift.ThriftPlugin._
 
 object MyBuild extends Build {
@@ -16,11 +17,36 @@ object MyBuild extends Build {
     thriftJavaOptions := Seq( "hashcode", "java5" )
   )
 
-  object Versions{
+  object Versions {
     val scala = "2.10.0"
     val lift = "2.5-RC1"
     val hadoop = "2.0.0-cdh4.2.0"
     val scalaIO = "0.4.2"
+  }
+
+  object Dependencies {
+    val common = Seq(
+      "org.scalacheck" %% "scalacheck" % "1.10.0" % "test",
+      "org.scalatest" %% "scalatest" % "1.9.1" % "test",
+      "org.specs2" %% "specs2" % "1.14" % "test",
+      "org.mockito" % "mockito-core" % "1.9.5" % "test"
+    )
+    val thrift = Seq(
+      "org.apache.thrift" % "libthrift" % "0.9.0" % "compile"
+    )
+    val core = common ++ thrift ++ Seq(
+      "org.apache.commons" % "commons-lang3" % "3.1" % "compile",
+      //"com.github.scala-incubator.io" %% "scala-io-core" % Versions.scalaIO % "compile",
+      //"com.github.scala-incubator.io" %% "scala-io-file" % Versions.scalaIO % "compile",
+      "net.liftweb" %% "lift-util" % Versions.lift % "compile",
+      "org.apache.hadoop" % "hadoop-client" % Versions.hadoop % "provided",
+      "org.apache.hadoop" % "hadoop-yarn-client" % Versions.hadoop % "provided"
+      //"org.scalaz" %% "scalaz-core" % "6.0.4" % "compile",
+    )
+    val examples = thrift ++ Seq(
+      "org.apache.hadoop" % "hadoop-client" % Versions.hadoop % "compile",
+      "org.apache.hadoop" % "hadoop-yarn-client" % Versions.hadoop % "compile"
+    )     
   }
 
   /** */
@@ -37,22 +63,8 @@ object MyBuild extends Build {
       "Concurrent Maven Repo" at "http://conjars.org/repo"
     ),
 
+    libraryDependencies ++= Dependencies.common,
 
-    //TODO issolate a per Project lib Seq sharing a common Seq.
-    libraryDependencies ++= Seq(
-      "org.apache.commons" % "commons-lang3" % "3.1",
-      "com.github.scala-incubator.io" %% "scala-io-core" % Versions.scalaIO,
-      "com.github.scala-incubator.io" %% "scala-io-file" % Versions.scalaIO,
-      "net.liftweb" %% "lift-util" % Versions.lift % "compile",
-      "org.apache.hadoop" % "hadoop-client" % Versions.hadoop,
-      "org.apache.hadoop" % "hadoop-yarn-client" % Versions.hadoop,
-      "org.scalaz" %% "scalaz-core" % "6.0.4",
-      "org.apache.thrift" % "libthrift" % "0.9.0" % "compile",
-      "org.scalacheck" %% "scalacheck" % "1.10.0" % "test",
-      "org.scalatest" %% "scalatest" % "1.9.1" % "test",
-      "org.specs2" %% "specs2" % "1.14" % "test",
-      "org.mockito" % "mockito-core" % "1.9.5" % "test"
-    ),
     parallelExecution in Test := false,
 
     scalacOptions ++= Seq("-unchecked", "-deprecation"),
@@ -91,23 +103,29 @@ object MyBuild extends Build {
   lazy val thriftSchemaPrj = Project(
     id = "thrift-schema",
     base = file("thrift-schema")
-  ).settings( sharedSettings : _* )
+  ).settings( libraryDependencies ++= Dependencies.thrift)
+    .settings( sharedSettings : _* )
     .settings( thriftSettings : _* )
     .settings( customThriftSettings : _*)
+    .settings( graphSettings : _* )
     .configs(Thrift)
 
   /** */
   lazy val corePrj = Project(
     id = "core",
-    base = file("core"),
-    settings = sharedSettings
-  ).dependsOn(thriftSchemaPrj)
+    base = file("core")
+  ).settings( libraryDependencies ++= Dependencies.core)
+   .settings( sharedSettings : _* )
+   .settings( graphSettings : _*)
+   .dependsOn(thriftSchemaPrj)
 
   /** */
   lazy val examplesPrj = Project(
     id = "examples",
-    base = file("examples"),
-    settings = sharedSettings
-  ).dependsOn(corePrj)
+    base = file("examples")
+  ).settings(libraryDependencies ++= Dependencies.examples)
+   .settings( sharedSettings : _* )
+   .settings( graphSettings : _*)
+   .dependsOn(corePrj)
 
 }
