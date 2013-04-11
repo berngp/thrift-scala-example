@@ -24,6 +24,7 @@ BinPacket => ThriftBinPacket,
 NetRecord => ThriftNetRecord,
 PacketHeader => ThriftNetHeader
 }
+import java.io.IOException
 
 object NetPacketThriftGateway extends ControlHelpers with Loggable {
 
@@ -79,10 +80,21 @@ object NetPacketThriftGateway extends ControlHelpers with Loggable {
     def asThriftBox(): Box[ThriftBinPacket] = netBinPacketToThrift(binPacket)
   }
 
-  class WritableThriftBinPacket(thrift:ThriftBinPacket) extends ThriftBinPacket(thrift) with ThriftHadoopWritable[ThriftBinPacket, ThriftBinPacket._Fields]
+  class WritableThriftBinPacket(thrift:ThriftBinPacket) extends ThriftBinPacket(thrift) with ThriftHadoopWritable[ThriftBinPacket, ThriftBinPacket._Fields] {
+    def this() = {
+      this( new ThriftBinPacket())
+    }
+    def this( header:ThriftNetHeader, records:java.util.List[ThriftNetRecord] ) = {
+      this( new ThriftBinPacket(header,records) )
+    }
+  }
+
+  object WritableThriftBinPacket {
+    def apply(thrift:ThriftBinPacket) = new WritableThriftBinPacket(thrift)
+  }
 
   implicit class ThriftBinPacketToHDFSWritable(thrift: ThriftBinPacket) {
-    def toWritable():WritableThriftBinPacket = new WritableThriftBinPacket(thrift)
+    def toWritable():WritableThriftBinPacket = WritableThriftBinPacket(thrift)
   }
 
 }

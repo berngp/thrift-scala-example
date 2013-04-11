@@ -17,13 +17,12 @@
 package com.github.berngp.thriftexample
 
 import java.io._
+import net.liftweb.common.Logger
 import org.apache.hadoop.io.serializer.{Serializer, Deserializer}
 import org.apache.hadoop.util.ReflectionUtils
 import org.apache.thrift._
-import org.apache.thrift.protocol.{TCompactProtocol, TBinaryProtocol, TProtocol}
-import org.apache.thrift.transport.TIOStreamTransport
-import collection.mutable.ArrayBuffer
-import net.liftweb.common.Logger
+import org.apache.thrift.protocol.{TBinaryProtocol, TProtocolFactory, TProtocol}
+import org.apache.thrift.transport.{TTransport, TIOStreamTransport}
 
 
 trait ThriftHadoopWritable[T <: TBase[_, _], F <: TFieldIdEnum]
@@ -31,83 +30,142 @@ trait ThriftHadoopWritable[T <: TBase[_, _], F <: TFieldIdEnum]
   with org.apache.hadoop.io.Writable
   with Logger {
 
-  @throws[IOException]
-  def write(out: DataOutput) = {
-    val ser = new TSerializer(new TBinaryProtocol.Factory())
-    out.write(ser.serialize(this))
-  }
+  private val factory: TProtocolFactory = new TBinaryProtocol.Factory()
 
+  /** Sets the Max Length of bytes allocated for serializing the Thrift Object, please overload if the object you expect is larger.
+    * Current Max Value is **1073741824**.
+    * */
+  protected def getMaxLength = 1073741824
+
+  @Override
   @throws[IOException]
-  def readFields(in: DataInput) {
-    val buf: ArrayBuffer[Byte] = ArrayBuffer()
-    try {
-      buf += in.readByte()
-    } catch {
-      case e: EOFException =>
-        val des = new TDeserializer(new TCompactProtocol.Factory())
-        des.deserialize(this, buf.toArray)
+  def write(out: DataOutput) {
+    val ser = new TSerializer(factory)
+    val bytes = ser.serialize(this)
+    require(bytes.length < getMaxLength,
+      s"Length of the writable ${bytes.length} exceeds the max allowed of ${getMaxLength} bytes, if intended please override `getMaxLength`.")
+
+    if (bytes.length > 0) {
+      out.writeInt(bytes.length)
+      out.write(bytes, 0, bytes.length)
+    } else {
+      out.write(0)
     }
   }
+
+  @Override
+  @throws[IOException]
+  def readFields(in: DataInput) {
+    val length = in.readInt()
+    require(length < getMaxLength,
+      s"Length of the writable [${length}}] exceeds the max allowed of ${getMaxLength} bytes, if intended please override `getMaxLength`.")
+    val buff = new Array[Byte](length)
+
+    in.readFully(buff, 0, length)
+    val dser = new TDeserializer(factory)
+
+    dser.deserialize(this, buff)
+  }
+
 }
 
-/** */
+/**
+ *
+ * TODO Refacotr, avoid duplication on the _*Serializers_
+ */
 class ThriftSerialization[T <: TBase[T, _]]
   extends org.apache.hadoop.io.serializer.Serialization[T] with Logger {
 
   def accept(c: Class[_]): Boolean = {
-    (c: @unchecked).getInterfaces.contains(classOf[TBase[_,_]])
+    (c: @unchecked).getInterfaces.contains(classOf[TBase[_, _]])
   }
+
+  private def getProtocolFactory = new TBinaryProtocol.Factory()
 
   def getSerializer(c: Class[T]): Serializer[T] = new TSerializerAdapter
 
-  def getDeserializer(c: Class[T]): Deserializer[T] = new TDeserializerAdapter(c)
-
   class TSerializerAdapter extends org.apache.hadoop.io.serializer.Serializer[T] {
-    var transport: Option[TIOStreamTransport] = None
-    var protocol: Option[TProtocol] = None
+
+    protected val factory: TProtocolFactory = getProtocolFactory
+
+    private def getOutputTransport(out: OutputStream): TIOStreamTransport = {
+      new TIOStreamTransport(out)
+    }
+
+    private def getOutputProtocol(transport: TTransport): TProtocol = {
+      factory getProtocol transport
+    }
+
+    private var _transport: TTransport = null
+
+    private var _protocol: TProtocol = null
+
+    private var _out: OutputStream = null
 
     def open(out: OutputStream) = synchronized {
-      transport = Some(new TIOStreamTransport(out))
-      transport match {
-        case Some(t) =>
-          protocol = Some(new TBinaryProtocol(t))
-        case None =>
-          throw new IllegalArgumentException("Transport:TIOStreamTransport expected!")
-      }
+      require(out != null, "OutputStream required!")
+      _out = out
+      _transport = getOutputTransport(_out)
+      _protocol = getOutputProtocol(_transport)
     }
 
     @throws[IOException]
     def serialize(t: T) {
-      protocol match {
-        case Some(p) =>
-          try {
-            t.write(p)
-          } catch {
-            case e: TException =>
-              throw new IOException(e)
-          }
-        case None =>
-          throw new IllegalStateException("Protocol not defined, please `open` the Serializer first!")
+      require(_protocol != null, "A Transport Protocol is missing, please open the Serializer!")
+      try {
+        t.write(_protocol)
+      } catch {
+        case e: TException =>
+          throw new IOException(e)
       }
     }
 
+    //TODO Refactor, clean duplication and consider using tryo
     @throws[IOException]
     def close() = synchronized {
-      transport match {
-        case Some(t) =>
-          t.close()
-        case None =>
+      if (_transport != null) {
+        try {
+          _transport.close()
+        } catch {
+          case t: Throwable =>
+            warn("Throwable caught while closing transport.", t)
+        }
+      }
+      if (_out != null) {
+        try {
+          _out.close()
+        } catch {
+          case t: Throwable =>
+            warn("Throwable caught while closing Output Stream.", t)
+        }
       }
     }
   }
 
-  class TDeserializerAdapter(tClass: Class[T]) extends org.apache.hadoop.io.serializer.Deserializer[T] {
-    var transport: TIOStreamTransport = null
-    var protocol: TProtocol = null
+  def getDeserializer(c: Class[T]): Deserializer[T] = new TDeserializerAdapter(c)
 
-    def open(in: InputStream) {
-      transport = new TIOStreamTransport(in)
-      protocol = new TBinaryProtocol(transport)
+  class TDeserializerAdapter(tClass: Class[T]) extends org.apache.hadoop.io.serializer.Deserializer[T] {
+
+    protected val factory: TProtocolFactory = getProtocolFactory
+
+    private def getInputTransport(in: InputStream): TIOStreamTransport = {
+      new TIOStreamTransport(in)
+    }
+
+    private def getInputProtocol(transport: TTransport): TProtocol = {
+      factory getProtocol transport
+    }
+
+    private var _transport: TTransport = null
+
+    private var _protocol: TProtocol = null
+
+    private var _in: InputStream = null
+
+    def open(in: InputStream) = synchronized {
+      _in = in
+      _transport = getInputTransport(_in)
+      _protocol = getInputProtocol(_transport)
     }
 
     private def _getThriftBase(t: T) = {
@@ -121,22 +179,30 @@ class ThriftSerialization[T <: TBase[T, _]]
 
     @throws[IOException]
     def deserialize(t: T): T = {
-
-      val _obj: T = _getThriftBase(t)
-
-      try {
-        _obj.read(protocol)
-      } catch {
-        case e: TException =>
-          throw new IOException(e)
-      }
-      _obj
+      require(_protocol != null, "A Transport Protocol is missing, please open the Deserializer!")
+      val base = _getThriftBase(t)
+      base.read(_protocol)
+      base
     }
 
+    //TODO Refactor, clean duplication and consider using tryo
     @throws[IOException]
-    def close() = {
-      if (transport != null) {
-        transport.close()
+    def close() = synchronized {
+      if (_transport != null) {
+        try {
+          _transport.close()
+        } catch {
+          case t: Throwable =>
+            warn("Throwable caught while closing transport.", t)
+        }
+      }
+      if (_in != null) {
+        try {
+          _in.close()
+        } catch {
+          case t: Throwable =>
+            warn("Throwable caught while closing InputStream.", t)
+        }
       }
     }
   }

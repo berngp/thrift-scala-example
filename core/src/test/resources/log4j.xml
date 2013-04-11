@@ -25,6 +25,11 @@
         </layout>
     </appender>
 
+    <logger name="org.apache.hadoop" >
+        <level value="warn" />
+        <appender-ref ref="console" />
+    </logger>
+
     <root>
         <priority value ="info" />
         <appender-ref ref="console" />

@@ -77,16 +77,16 @@ object HadoopSequenceFileWriter {
   /** */
   abstract class MISSING extends BUILDER_REQ
 
-  class HadoopSequenceFileWriterBuilder[HC <: BUILDER_REQ, HF <: BUILDER_REQ] private[HadoopSequenceFileWriter](val theHadoopConf: HadoopConf = null,
-                                                                                                                val theFile: Option[Either[String, Path]] = None,
-                                                                                                                val theMeta: Option[TreeMap[String, String]] = None,
-                                                                                                                val theBufferSize: Option[Int] = None,
-                                                                                                                val theBlockSize: Option[Long] = None,
-                                                                                                                val theCompression: Option[CompressionType] = Some(CompressionType.BLOCK),
-                                                                                                                val theReplication: Option[Short] = Some(0),
-                                                                                                                val theKeyClass: Option[Class[_]] = Some(classOf[NullWritable]),
-                                                                                                                val theValueClass: Option[Class[_]] = Some(classOf[Text]),
-                                                                                                                val theProgressableReporter: Option[Progressable] = None) {
+  class HadoopSequenceFileWriterBuilder[HC <: BUILDER_REQ, HF <: BUILDER_REQ](val theHadoopConf: HadoopConf = null,
+                                                                              val theFile: Option[Either[String, Path]] = None,
+                                                                              val theMeta: Option[TreeMap[String, String]] = None,
+                                                                              val theBufferSize: Option[Int] = None,
+                                                                              val theBlockSize: Option[Long] = None,
+                                                                              val theCompression: Option[CompressionType] = Some(CompressionType.BLOCK),
+                                                                              val theReplication: Option[Short] = Some(0),
+                                                                              val theKeyClass: Option[Class[_]] = Some(classOf[NullWritable]),
+                                                                              val theValueClass: Option[Class[_]] = Some(classOf[Text]),
+                                                                              val theProgressableReporter: Option[Progressable] = None) {
 
     private def _builder[HC <: BUILDER_REQ, HF <: BUILDER_REQ] = {
       new HadoopSequenceFileWriterBuilder[HC, HF](_, _, _, _, _, _, _, _, _, _)
