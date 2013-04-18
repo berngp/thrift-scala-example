@@ -27,7 +27,6 @@ import org.apache.hadoop.hive.serde2.SerDeStats
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory
 import org.apache.hadoop.io.Writable
-import org.apache.thrift.{TFieldIdEnum, TBase}
 
 
 class ThriftSerDe[T <: org.apache.thrift.TBase[org.apache.thrift.TBase[_, _], _ <: org.apache.thrift.TFieldIdEnum]] extends SerDe {
