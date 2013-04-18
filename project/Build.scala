@@ -14,13 +14,14 @@ object MyBuild extends Build {
 
     thrift := "/usr/local/bin/thrift",
 
-    thriftJavaOptions := Seq( "hashcode", "java5" )
+    thriftJavaOptions := Seq("hashcode", "java5")
   )
 
   object Versions {
     val scala = "2.10.0"
     val lift = "2.5-RC1"
     val hadoop = "2.0.0-cdh4.2.0"
+    val hive = "0.10.0-cdh4.2.0"
     val scalaIO = "0.4.2"
   }
 
@@ -36,17 +37,18 @@ object MyBuild extends Build {
     )
     val core = common ++ thrift ++ Seq(
       "org.apache.commons" % "commons-lang3" % "3.1" % "compile",
-      //"com.github.scala-incubator.io" %% "scala-io-core" % Versions.scalaIO % "compile",
-      //"com.github.scala-incubator.io" %% "scala-io-file" % Versions.scalaIO % "compile",
-      "net.liftweb" %% "lift-util" % Versions.lift % "compile",
-      "org.apache.hadoop" % "hadoop-client" % Versions.hadoop % "provided",
-      "org.apache.hadoop" % "hadoop-yarn-client" % Versions.hadoop % "provided"
       //"org.scalaz" %% "scalaz-core" % "6.0.4" % "compile",
+      "net.liftweb" %% "lift-util" % Versions.lift % "compile",
+      // Hadoop
+      "org.apache.hadoop" % "hadoop-client" % Versions.hadoop % "provided",
+      "org.apache.hadoop" % "hadoop-client" % Versions.hadoop % "provided",
+      "org.apache.hadoop" % "hadoop-yarn-client" % Versions.hadoop % "provided",
+      "org.apache.hive" % "hive-serde" % Versions.hive % "provided"
     )
     val examples = thrift ++ Seq(
       "org.apache.hadoop" % "hadoop-client" % Versions.hadoop % "compile",
       "org.apache.hadoop" % "hadoop-yarn-client" % Versions.hadoop % "compile"
-    )     
+    )
   }
 
   /** */
@@ -103,29 +105,29 @@ object MyBuild extends Build {
   lazy val thriftSchemaPrj = Project(
     id = "thrift-schema",
     base = file("thrift-schema")
-  ).settings( libraryDependencies ++= Dependencies.thrift)
-    .settings( sharedSettings : _* )
-    .settings( thriftSettings : _* )
-    .settings( customThriftSettings : _*)
-    .settings( graphSettings : _* )
+  ).settings(libraryDependencies ++= Dependencies.thrift)
+    .settings(sharedSettings: _*)
+    .settings(thriftSettings: _*)
+    .settings(customThriftSettings: _*)
+    .settings(graphSettings: _*)
     .configs(Thrift)
 
   /** */
   lazy val corePrj = Project(
     id = "core",
     base = file("core")
-  ).settings( libraryDependencies ++= Dependencies.core)
-   .settings( sharedSettings : _* )
-   .settings( graphSettings : _*)
-   .dependsOn(thriftSchemaPrj)
+  ).settings(libraryDependencies ++= Dependencies.core)
+    .settings(sharedSettings: _*)
+    .settings(graphSettings: _*)
+    .dependsOn(thriftSchemaPrj)
 
   /** */
   lazy val examplesPrj = Project(
     id = "examples",
     base = file("examples")
   ).settings(libraryDependencies ++= Dependencies.examples)
-   .settings( sharedSettings : _* )
-   .settings( graphSettings : _*)
-   .dependsOn(corePrj)
+    .settings(sharedSettings: _*)
+    .settings(graphSettings: _*)
+    .dependsOn(corePrj)
 
 }
