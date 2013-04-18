@@ -83,9 +83,6 @@ object NetPacketThriftGateway extends ControlHelpers with Loggable {
     def this() = {
       this( new ThriftBinPacket())
     }
-    def this( header:ThriftNetHeader, records:java.util.List[ThriftNetRecord] ) = {
-      this( new ThriftBinPacket(header,records) )
-    }
   }
 
   object WritableThriftBinPacket {
@@ -94,6 +91,20 @@ object NetPacketThriftGateway extends ControlHelpers with Loggable {
 
   implicit class ThriftBinPacketToHDFSWritable(thrift: ThriftBinPacket) {
     def toWritable():WritableThriftBinPacket = WritableThriftBinPacket(thrift)
+  }
+
+  class WritableThriftNetRecord(thrift:ThriftNetRecord) extends ThriftNetRecord(thrift) with ThriftHadoopWritable[ThriftNetRecord, ThriftNetRecord._Fields] {
+    def this() = {
+      this( new ThriftNetRecord())
+    }
+  }
+
+  object WritableThriftNetRecord {
+    def apply(thrift:ThriftNetRecord) = new WritableThriftNetRecord(thrift)
+  }
+
+  implicit class ThriftNetRecordToHDFSWritable(thrift: ThriftNetRecord) {
+    def toWritable():WritableThriftNetRecord = WritableThriftNetRecord(thrift)
   }
 
 }
