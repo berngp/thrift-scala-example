@@ -24,7 +24,6 @@ BinPacket => ThriftBinPacket,
 NetRecord => ThriftNetRecord,
 PacketHeader => ThriftNetHeader
 }
-import java.io.IOException
 
 object NetPacketThriftGateway extends ControlHelpers with Loggable {
 

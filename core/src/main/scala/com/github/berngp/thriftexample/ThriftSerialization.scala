@@ -37,9 +37,8 @@ trait ThriftHadoopWritable[T <: TBase[_, _], F <: TFieldIdEnum]
     * */
   protected def getMaxLength = 1073741824
 
-  @Override
   @throws[IOException]
-  def write(out: DataOutput) {
+  override def write(out: DataOutput) {
     val ser = new TSerializer(factory)
     val bytes = ser.serialize(this)
     require(bytes.length < getMaxLength,
@@ -55,7 +54,7 @@ trait ThriftHadoopWritable[T <: TBase[_, _], F <: TFieldIdEnum]
 
   @Override
   @throws[IOException]
-  def readFields(in: DataInput) {
+  override def readFields(in: DataInput) {
     val length = in.readInt()
     require(length < getMaxLength,
       s"Length of the writable [${length}}] exceeds the max allowed of ${getMaxLength} bytes, if intended please override `getMaxLength`.")
