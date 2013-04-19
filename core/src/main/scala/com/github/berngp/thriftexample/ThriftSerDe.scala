@@ -27,28 +27,31 @@ import org.apache.hadoop.hive.serde2.SerDeStats
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory
 import org.apache.hadoop.io.Writable
+import org.apache.thrift.{TFieldIdEnum, TBase}
 
+//class ThriftSerDe[B <: TBase[_,_], F <: TFieldIdEnum, T <: TBase[B, F]](bytes: Array[Byte], length: Int) extends SerDe {
+class ThriftSerDe[T <: TBase[T, F],F <: TFieldIdEnum] extends SerDe {
 
-class ThriftSerDe[T <: org.apache.thrift.TBase[org.apache.thrift.TBase[_, _], _ <: org.apache.thrift.TFieldIdEnum]] extends SerDe {
 
   @GuardedBy(value = "initLock")
   var inspector: ObjectInspector = null
   val initLock: ReentrantLock = new ReentrantLock()
-
-  @throws[SerDeException]
-  def deserialize(w: Writable): AnyRef = {
-    if (w.isInstanceOf[ThriftWritableAdapter[T]]) {
-      (w.asInstanceOf[ThriftWritableAdapter[T]]).getFromBytes
-    } else {
-      throw new SerDeException(s"Not an instance of ThriftHadoopWritable or accepted by the ThriftSerialization: $w")
-    }
-  }
 
   def getObjectInspector: ObjectInspector = inspector
 
   override def initialize(conf: Configuration, p: Properties) = {
     _setInspector(_getThriftClass(conf, _getThriftClassName(p)))
   }
+
+  @throws[SerDeException]
+  def deserialize(w: Writable): AnyRef = {
+    if (w.isInstanceOf[ThriftBytesWritable[T,F]]) {
+      (w.asInstanceOf[ThriftBytesWritable[T,F]]).getFromBytes
+    } else {
+      throw new SerDeException(s"Not an instance of ThriftBytesWritable :  $w")
+    }
+  }
+
 
   @throws[SerDeException]
   private def _getThriftClassName(p: Properties): String = {
@@ -85,12 +88,57 @@ class ThriftSerDe[T <: org.apache.thrift.TBase[org.apache.thrift.TBase[_, _], _ 
   }
 
   /** @todo implement something meaningful. */
-  def getSerializedClass: Class[_ <: Writable] = classOf[ThriftWritableAdapter[T]]
+  def getSerializedClass: Class[_ <: Writable] = classOf[ThriftBytesWritable[T,F]]
 
   /** @todo implement something meaningful. */
-  def serialize(p1: Any, p2: ObjectInspector): Writable = null
+  def serialize(p1: Any, p2: ObjectInspector): Writable = {
+    System.out.println("Calling serialize from ThriftSerDe")
+    null
+  }
 
   /** @todo implement something meaningful. */
   def getSerDeStats: SerDeStats = null
 
+  /**
+   *
+  @Override
+  public Class<? extends Writable> getSerializedClass() {
+    return AvroGenericRecordWritable.class;
+  }
+
+  @Override
+  public Writable serialize(Object o, ObjectInspector objectInspector) throws SerDeException {
+    if(badSchema) throw new BadSchemaException();
+    return getSerializer().serialize(o, objectInspector, columnNames, columnTypes, schema);
+  }
+
+  @Override
+  public Object deserialize(Writable writable) throws SerDeException {
+    if(badSchema) throw new BadSchemaException();
+    return getDeserializer().deserialize(columnNames, columnTypes, writable, schema);
+  }
+
+  @Override
+  public ObjectInspector getObjectInspector() throws SerDeException {
+    return oi;
+  }
+
+  @Override
+  public SerDeStats getSerDeStats() {
+    // No support for statistics. That seems to be a popular answer.
+    return null;
+  }
+
+  private AvroDeserializer getDeserializer() {
+    if(avroDeserializer == null) avroDeserializer = new AvroDeserializer();
+
+    return avroDeserializer;
+  }
+
+  private AvroSerializer getSerializer() {
+    if(avroSerializer == null) avroSerializer = new AvroSerializer();
+
+    return avroSerializer;
+  }
+   */
 }

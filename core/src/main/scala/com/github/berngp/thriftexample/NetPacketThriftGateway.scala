@@ -24,6 +24,7 @@ BinPacket => ThriftBinPacket,
 NetRecord => ThriftNetRecord,
 PacketHeader => ThriftNetHeader
 }
+import com.github.berngp.thriftexample.thrift.example
 
 object NetPacketThriftGateway extends ControlHelpers with Loggable {
 
@@ -105,6 +106,30 @@ object NetPacketThriftGateway extends ControlHelpers with Loggable {
 
   implicit class ThriftNetRecordToHDFSWritable(thrift: ThriftNetRecord) {
     def toWritable():WritableThriftNetRecord = WritableThriftNetRecord(thrift)
+  }
+
+  class BytesWritableThriftNetRecord(thrift:example.NetRecord, b:Array[Byte], l:Int)
+    extends ThriftBytesWritable[example.NetRecord , example.NetRecord._Fields](thrift){
+
+    def this() = this(new example.NetRecord, Array.empty[Byte], 0)
+
+    def this(thrift:example.NetRecord) = this(thrift, Array.empty[Byte], 0)
+
+    def this(b:Array[Byte], l:Int) = this(new example.NetRecord(),b,l)
+
+    def this(b: Array[Byte]) = this(new example.NetRecord(), b, b.length)
+
+    def newBaseInstance: example.NetRecord = new example.NetRecord()
+
+    val baseClass: Class[example.NetRecord] = classOf[example.NetRecord]
+  }
+
+  object BytesWritableThriftNetRecord {
+    def apply(thrift:example.NetRecord) = new BytesWritableThriftNetRecord(thrift)
+  }
+
+  implicit class ThriftNetRecordToHDFSBytesWritable(thrift: example.NetRecord) {
+    def toBytesWritable():BytesWritableThriftNetRecord = BytesWritableThriftNetRecord(thrift)
   }
 
 }

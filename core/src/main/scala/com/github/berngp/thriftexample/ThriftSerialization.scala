@@ -25,7 +25,7 @@ import org.apache.thrift.protocol.{TBinaryProtocol, TProtocolFactory, TProtocol}
 import org.apache.thrift.transport.{TTransport, TIOStreamTransport}
 
 
-abstract class ThriftWritableAdapter[T <: TBase[TBase[_, _], _ <: TFieldIdEnum]](bytes: Array[Byte], length: Int)
+abstract class ThriftBytesWritable[T <: TBase[T, F], F <: TFieldIdEnum](bytes: Array[Byte], length: Int)
   extends org.apache.hadoop.io.BytesWritable(bytes, length)
   with Logger {
 
@@ -35,9 +35,16 @@ abstract class ThriftWritableAdapter[T <: TBase[TBase[_, _], _ <: TFieldIdEnum]]
 
   def this() = this(Array.empty[Byte])
 
-  def this(thrift: T, b: Array[Byte], l: Int) = {
-    this(b, l)
+  def this(thrift: T) = {
+    this()
     base = Some(thrift)
+    resetBytesFromThrift
+  }
+
+  private def resetBytesFromThrift = {
+    val array = toBytes
+    setCapacity(array.length)
+    set(array, 0, array.length)
   }
 
   def newBaseInstance: T
@@ -48,10 +55,10 @@ abstract class ThriftWritableAdapter[T <: TBase[TBase[_, _], _ <: TFieldIdEnum]]
 
   /** Sets the Max Length of bytes allocated for serializing the Thrift Object, please overload if the object you expect is larger.
     * Current Max Value is **1073741824**.
-    * */
+    */
   protected def getMaxLength = 1073741824
 
-  def _ensureBaseInstance = synchronized {
+  private def _ensureBaseInstance = synchronized {
     base match {
       case None =>
         base = Some(newBaseInstance)
@@ -60,13 +67,26 @@ abstract class ThriftWritableAdapter[T <: TBase[TBase[_, _], _ <: TFieldIdEnum]]
     base
   }
 
-  private def toBytes = _ensureBaseInstance match {
+  private def toBytes: Array[Byte] = _ensureBaseInstance match {
     case Some(t) =>
       val ser = new TSerializer(factory)
       val bytes = ser.serialize(t)
       bytes
     case None =>
       Array.empty[Byte]
+  }
+
+  override def getBytes(): Array[Byte] = toBytes
+
+  override def copyBytes(): Array[Byte] = {
+    val array = toBytes
+    if (array.length > 0) {
+      val buffer = new Array[Byte](array.length)
+      array.copyToArray(buffer)
+      buffer
+    } else {
+      Array.empty[Byte]
+    }
   }
 
   @throws[IOException]
@@ -83,7 +103,6 @@ abstract class ThriftWritableAdapter[T <: TBase[TBase[_, _], _ <: TFieldIdEnum]]
     val bytes = toBytes
     require(bytes.length < getMaxLength,
       s"Length of the writable ${bytes.length} exceeds the max allowed of ${getMaxLength} bytes, if intended please override `getMaxLength`.")
-
     if (bytes.length > 0) {
       out.writeInt(bytes.length)
       out.write(bytes, 0, bytes.length)
@@ -100,15 +119,20 @@ abstract class ThriftWritableAdapter[T <: TBase[TBase[_, _], _ <: TFieldIdEnum]]
       require(length < getMaxLength,
         s"Length of the writable [${length}}] exceeds the max allowed of ${getMaxLength} bytes, if intended please override `getMaxLength`.")
       val buff = new Array[Byte](length)
-
       in.readFully(buff, 0, length)
-      val dser = new TDeserializer(factory)
-
-      _ensureBaseInstance
-      dser.deserialize(t, buff)
+      val dSer = new TDeserializer(factory)
+      dSer.deserialize(t, buff)
     case None =>
       throw new IllegalStateException("Unable to ensure a base reference.")
   }
+
+  override def toString(): String = {
+    s"""
+    Base Class:${baseClass}
+    TBase:${base}
+    Bytes:${super.toString()}""".stripMargin
+  }
+
 }
 
 
