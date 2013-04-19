@@ -73,10 +73,11 @@ val seqFilesDir = s"/user/my-example/script-thrift-example/${format.format(new D
 
 Console.println(Console.GREEN + s"Writing to ${seqFilesDir}" + Console.WHITE)
 
-val plan = builder() withDestinationsAddresses destinationAddresses withSourceAddresses sourceAddresses withSize 10 withVoter Voting.constant plan()
+val plan = builder() withDestinationsAddresses destinationAddresses withSourceAddresses sourceAddresses withSize 100 withVoter Voting.constant plan()
 
 val b = hdfsWriter() withHadoopConf conf withReplication 1
 
+val currentTime = System.currentTimeMillis()
 plan.timeSeries.view.foreach {
   bin =>
   // Creating the Meta from the Bin Header info.
@@ -86,10 +87,10 @@ plan.timeSeries.view.foreach {
       "sysUpTime" -> bin.header.sysUpTime.toString
     )
 
-    Console.println(Console.WHITE + s"Writing for bin ${meta}" + Console.WHITE)
+    val seqFileName = s"${currentTime}-${bin.header.sequenceNumber}.seq"
 
     //Writing the Sequence Files with bare thrift records.
-    b withMeta meta withFile s"${seqFilesDir}/thrift-NetRecords/${bin.header.sequenceNumber}.seq" withValueClass classOf[ThriftNetRecord] build() doWithSequenceFileWriter {
+    b withMeta meta withFile s"${seqFilesDir}/thrift-NetRecords/${seqFileName}" withValueClass classOf[ThriftNetRecord] build() doWithSequenceFileWriter {
       writer =>
         bin.records.view.map(_.asThriftBox()).filter(_.isDefined).map(_.get).foreach(r =>
           writer.append(Nil.toWritable(), r)
@@ -102,10 +103,23 @@ plan.timeSeries.view.foreach {
     }
 
     // Writting the Sequence files with Writables.
-    b withMeta meta withFile s"${seqFilesDir}/thrift-WritableNetRecords/${bin.header.sequenceNumber}.seq" withValueClass classOf[WritableThriftNetRecord] build() doWithSequenceFileWriter {
+    b withMeta meta withFile s"${seqFilesDir}/thrift-WritableNetRecords/${seqFileName}" withValueClass classOf[WritableThriftNetRecord] build() doWithSequenceFileWriter {
       writer =>
         bin.records.view.map(_.asThriftBox()).filter(_.isDefined).map(_.get).foreach(r =>
           writer.append(Nil.toWritable(), r.toWritable())
+        )
+    } match {
+      case f: Failure =>
+        Console.err.println(f.messageChain)
+        f.exception.get.printStackTrace()
+      case _ =>
+    }
+
+   // Writting the Sequence files with BytesWritables.
+    b withMeta meta withFile s"${seqFilesDir}/thrift-BytesWritableNetRecords/${seqFileName}" withValueClass classOf[BytesWritableThriftNetRecord] build() doWithSequenceFileWriter {
+      writer =>
+        bin.records.view.map(_.asThriftBox()).filter(_.isDefined).map(_.get).foreach(r =>
+          writer.append(Nil.toWritable(), r.toBytesWritable())
         )
     } match {
       case f: Failure =>
